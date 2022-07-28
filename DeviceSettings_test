@@ -1,0 +1,35 @@
+import path = require('path');
+
+const featureName: string = path.parse(__filename).name;
+
+import { TestName } from '../../../library/testname';
+
+Feature('Web Client');
+
+Before(({ CXE }) => {
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn();
+});
+
+const devicesToTest = new DataTable(['phone', 'type', 'active', 'timeout']);
+devicesToTest.add(['9129320001', 'Home Number', true, 5]);
+devicesToTest.add(['9129320002', 'Company Mobile', true, 10]);
+devicesToTest.add(['9129320003', 'Personal Mobile', true, 10]);
+devicesToTest.add(['9129320004', 'Remote Office', true, 10]);
+devicesToTest.add(['9129320005', 'Temporary', true, 10]);
+devicesToTest.add(['9129320006', 'Home Number', false, 10]);
+devicesToTest.add(['9129320007', 'Company Mobile', false, 10]);
+devicesToTest.add(['9129320008', 'Personal Mobile', false, 10]);
+devicesToTest.add(['9129320009', 'Remote Office', false, 10]);
+devicesToTest.add(['9129320010', 'Temporary', false, 10]);
+devicesToTest.add(['9129320011', 'Home Number', true, 60]);
+Data(devicesToTest).Scenario(TestName.generate(featureName, 'Add Remove Device Full Test'), async ({ CXE, current }) => {
+    CXE.goto.deviceSettings();
+
+    if ((await CXE.deviceSettings.deviceExists(current.phone)) > 0) {
+        await CXE.deviceSettings.removeDevice(current.phone);
+    }
+
+    CXE.deviceSettings.addDevice(current.phone, current.type, current.active, current.timeout);
+    await CXE.deviceSettings.removeDevice(current.phone);
+});

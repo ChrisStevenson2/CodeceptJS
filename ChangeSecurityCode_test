@@ -1,0 +1,44 @@
+import path = require('path');
+import cxe = require('../../../library/cxe');
+
+const featureName: string = path.parse(__filename).name;
+
+import { Generator } from '../../../library/data/generator';
+import { TestContext } from '../../../library/testcontext/testcontext';
+import { TestName } from '../../../library/testname';
+
+
+/**
+ * Tests for changing security code when Advanced Security Code Policy is enabled for the user account
+ */
+
+
+const changePassword = new DataTable(['new', 'confirm']) 
+
+changePassword.add(['1996', '1996']);
+changePassword.add(['4361', '4361']);
+changePassword.add(['8081', '8081']);
+
+Data(changePassword).Scenario(TestName.generate(featureName, 'Change Security Code | Advacnced Security Code Policy Enabled'), async ({ I, CXE, current }) => {
+
+    //Setup
+    const mailbox = TestContext.getInstance().username;
+    const mailboxPassword = TestContext.getInstance().password;
+
+    //Login
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn(mailbox, mailboxPassword);
+
+    //Navigating to change security code page and verfying page rendering
+    CXE.avatarMenu.changesecuritycode();
+    I.see(CXE.securityCode.helperText);
+    
+    //Setting new security code
+    CXE.securityCode.setCode(mailboxPassword, current.new, current.confirm);
+
+    //Validating the security code has been changed
+    CXE.homePage.logout();
+    CXE.loginPage.signIn(mailbox, current.new);
+    
+});
+

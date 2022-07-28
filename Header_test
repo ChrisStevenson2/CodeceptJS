@@ -1,0 +1,54 @@
+import path = require('path');
+
+const featureName: string = path.parse(__filename).name;
+
+import { TestName } from '../../../library/testname';
+
+Feature('Web Client');
+
+Before(({ CXE }) => {
+    CXE.goto.loginPage();
+});
+
+/**
+ * Verify Header and Logo
+ */
+Scenario(TestName.generate(featureName, 'Verify Header Logo'), ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+
+    CXE.header.verify();
+    I.visuallyValidateObject(CXE.header.logo, 'Logo 20.4', CXE.header.pageName);
+});
+
+/**
+ * Verify Help button is shown and it's location
+ */
+Scenario(TestName.generate(featureName, 'Verify Help Button'), async ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+
+    I.seeElement(CXE.header.helpButton);
+    I.visuallyValidateObject(CXE.header.helpButton, 'Help Button', CXE.header.pageName);
+
+    // Validate offset is a specific distance from the left
+    const helpButtonBoundingRect = await I.grabElementBoundingRect(CXE.header.helpButton);
+    const toolbarBoundingRect = await I.grabElementBoundingRect(CXE.header.toolbar);
+
+    const leftHandOffset = toolbarBoundingRect.width - helpButtonBoundingRect.x;
+    I.assert(leftHandOffset, 79, 'Actual offset from the right side (in pixels) was different from the expected offset.');
+});
+
+/**
+ * Verify Avatar button is shown in it's location
+ */
+Scenario(TestName.generate(featureName, 'Verify Avatar Button'), async ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+
+    I.seeElement(CXE.header.avatarButton);
+
+    // Validate offset is a specific distance from the left
+    const helpButtonBoundingRect = await I.grabElementBoundingRect(CXE.header.helpButton);
+    const avatarBoundingRect = await I.grabElementBoundingRect(CXE.header.avatarButton);
+
+    const helpButtonRight = Number(helpButtonBoundingRect.width) + Number(helpButtonBoundingRect.x);
+    I.assert(avatarBoundingRect.x, helpButtonRight, 'Location of the help button left edge was not in the expected location.');
+});

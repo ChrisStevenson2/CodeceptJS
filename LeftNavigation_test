@@ -1,0 +1,40 @@
+import path = require('path');
+
+const featureName: string = path.parse(__filename).name;
+
+import { TestContext } from '../../../library/testcontext/testcontext';
+import { TestName } from '../../../library/testname';
+
+Feature('Web Client');
+
+Scenario(TestName.generate(featureName, 'Verify Left Navigation Icons'), ({ I, CXE }) => {
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn(TestContext.getInstance().username, TestContext.getInstance().password);
+    CXE.leftNav.verifyLeftNavigation();
+
+    I.visuallyValidateObject(CXE.leftNav.newMessageIcon, 'New Message Icon', CXE.leftNav.pageName);
+    I.visuallyValidateObject(CXE.leftNav.inboxIcon, 'Inbox Icon', CXE.leftNav.pageName);
+    I.visuallyValidateObject(CXE.leftNav.savedIcon, 'Saved Icon', CXE.leftNav.pageName);
+    I.visuallyValidateObject(CXE.leftNav.deletedIcon, 'Deleted Icon', CXE.leftNav.pageName);
+    I.visuallyValidateObject(CXE.leftNav.preferencesIcon, 'Preferences Icon', CXE.leftNav.pageName);
+    I.visuallyValidateObject(CXE.leftNav.recordingIcon, 'Recording Icon', CXE.leftNav.pageName);
+    I.visuallyValidateObject(CXE.leftNav.devicesIcon, 'Devices Icon', CXE.leftNav.pageName);
+    I.visuallyValidateObject(CXE.leftNav.messagingIcon, 'Messaging Icon', CXE.leftNav.pageName);
+    I.visuallyValidateObject(CXE.leftNav.notificationsIcon, 'Notifications Icon', CXE.leftNav.pageName);
+});
+
+Scenario(TestName.generate(featureName, 'Verify Left Hide / Show'), ({ I, CXE }) => {
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn();
+    CXE.leftNav.verifyLeftNavigation();
+
+    I.visuallyValidateObject(CXE.leftNav.leftNavigationToggle, 'Left Navigation Toggle', CXE.leftNav.pageName);
+
+    // Toggle left navigation closed
+    I.click(CXE.leftNav.leftNavigationToggle);
+    CXE.leftNav.verifyLeftNavigationHidden();
+
+    // Toggle left navigation open
+    I.click(CXE.leftNav.leftNavigationToggle);
+    CXE.leftNav.verifyLeftNavigation();
+});

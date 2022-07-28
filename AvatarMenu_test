@@ -1,0 +1,14 @@
+import path = require('path');
+import { TestName } from '../../../library/testname';
+
+const featureName: string = path.parse(__filename).name;
+
+Feature('Web Client');
+
+Scenario(TestName.generate(featureName, 'Validate Avatar Menu Options Are Present'), ({ CXE }) => {
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn();
+
+    CXE.homePage.openAvatarMenu();
+    CXE.avatarMenu.verify();
+});

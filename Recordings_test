@@ -1,0 +1,96 @@
+import path = require('path');
+const featureName: string = path.parse(__filename).name;
+
+import { TestName } from '../../../library/testname';
+
+Feature('Web Client');
+
+/**
+ * Validates navigation to the Recordings page and verify elements exist
+ */
+Scenario(TestName.generate(featureName, 'Recordings BVT'), ({ I, CXE }) => {
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn();
+
+    CXE.goto.recordings();
+
+    I.seeElement(CXE.recordings.outOfOfficeCheckbox);
+    I.seeElement(CXE.recordings.micIcon);
+    I.seeElement(CXE.recordings.importRecordingButton);
+    I.seeElement(CXE.recordings.standardGreetingRow);
+    I.seeElement(CXE.recordings.busyGreetingRow);
+    I.seeElement(CXE.recordings.outOfOfficeGreetingRow);
+
+});
+
+/**
+ * Validates Standard Greetings edit pop-up
+ */
+ Scenario(TestName.generate(featureName, 'Recordings Standard Greeting Edit'), ({ I, CXE }) => {
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn();
+
+    CXE.goto.recordings();
+
+    I.seeElement(CXE.recordings.editStandardGreeting);
+    
+    I.waitForClickable(CXE.recordings.editStandardGreeting);
+    I.click(CXE.recordings.editStandardGreeting);
+    
+    I.seeElement(CXE.recordings.StdGreetingTitle);
+    I.seeElement(CXE.recordings.saveButtonEditStandardGreeting);
+    I.seeElement(CXE.recordings.cancelButtonEditStandardGreeting);
+
+    I.waitForClickable(CXE.recordings.cancelButtonEditStandardGreeting);
+    I.click(CXE.recordings.cancelButtonEditStandardGreeting);
+
+ });
+
+/**
+ * Verify 'Busy Greeting' Edit pop up.
+ */
+ Scenario(TestName.generate(featureName, 'Verify Busy Greeting Edit Pop-up'), ({ I, CXE }) => {
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn();
+
+    CXE.goto.recordings();
+
+    const greetingName = 'Busy Greeting';
+
+    // Verify the row exist with Busy Greeting
+    const greetingRow = locate('tr').withChild("//td[normalize-space()='" + greetingName + "']");
+
+    // Verify the edit button for the greeting
+    const foundEditButton = locate("//i[@class='cxw-icon']").inside(greetingRow);
+    I.click(foundEditButton);
+    
+    // Verify pop-up title
+    const locatorStringGreetings = "//h2[normalize-space()=" + greetingName + "']'";
+    const foundTitle = locate(locatorStringGreetings).inside('cxw-dialog__surface');
+    
+});
+
+/**
+ * Verify ' Out-of-Office Greeting' Edit pop up.
+ */
+ Scenario(TestName.generate(featureName, 'Verify  Out-of-Office Greeting  Edit Pop-up'), ({ I, CXE }) => {
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn();
+
+    CXE.goto.recordings();
+
+    const greetingName = 'Out-of-Office Greeting';
+
+    // Verify the row exist with  Out-of-Office Greeting 
+    const greetingRow = locate('tr').withChild("//td[normalize-space()='" + greetingName + "']");
+
+    // Verify the edit button for the greeting
+    const foundEditButton = locate("//i[@class='cxw-icon']").inside(greetingRow);
+    I.click(foundEditButton);
+    
+    // Verify pop-up title
+    const locatorStringGreetings = "//h2[normalize-space()=" + greetingName + "']'";
+    const foundTitle = locate(locatorStringGreetings).inside('cxw-dialog__surface');
+
+   
+});

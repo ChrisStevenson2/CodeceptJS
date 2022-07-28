@@ -1,0 +1,315 @@
+import path = require('path');
+const featureName: string = path.parse(__filename).name;
+
+import md5File from 'md5-file';
+import { TestContext } from '../../../library/testcontext/testcontext';
+import { TestName } from '../../../library/testname';
+import { timeouts } from '../../../library/timeouts';
+
+
+Feature('Web Client');
+
+Before(({ CXE }) => {
+    CXE.goto.loginPage();
+});
+
+/**
+ * Tests the basic recording controls (record, stop) and sends the message validating it's basic contents and that the audio sent can be downloaded.
+ */
+Scenario(TestName.generate(featureName, 'Recording Controls Test'), async ({ CXE, I }) => {
+    const mailboxNumber = TestContext.getInstance().username;
+    const messageLength = 5;
+
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    const messageSubject = new Date().toISOString();
+    CXE.newMessagePage.sendMessageRecordAudio(mailboxNumber, messageSubject, messageLength);
+    
+    await CXE.inboxPage.verifyMessageExists(messageSubject);
+    CXE.inboxPage.selectMessageBySubject(messageSubject);
+    CXE.inboxPage.verifyMessage(messageSubject, TestContext.getInstance().accountName, mailboxNumber);
+
+    // Set Downloads and download the file
+    I.handleDownloads();
+    I.click(CXE.inboxPage.downloadButton);
+
+    // Wait to get the file name from the page
+    const timeoutEnd = new timeouts().getTimeoutEndProvideLength(15);
+    let fileName = null;
+    do {
+        fileName = await I.grabAttributeFrom(CXE.inboxPage.downloadAnchor, 'download');
+        I.wait(3);
+    }while (fileName === null && new Date() < timeoutEnd);
+
+    const downloadLocation = 'output/downloads';
+
+    // Verify file exists
+    I.amInPath(downloadLocation);
+    I.seeFile(fileName);
+}).tag('@BVT');
+
+Scenario(TestName.generate(featureName, 'Validate component controls'), ({ CXE, I }) => {
+    CXE.loginPage.signIn();
+    // Navigating to new message page validates the basic controls for the page
+    CXE.goto.newMessage();
+
+    I.seeElement(CXE.newMessagePage.sendButton);
+    I.seeElement(CXE.newMessagePage.cancelButton);
+    I.seeElement(CXE.newMessagePage.toTextField);
+    I.seeElement(CXE.newMessagePage.subjectTextField);
+    
+    I.seeElement(CXE.newMessagePage.recordButton);
+    I.seeElement(CXE.newMessagePage.uploadButton);
+    I.seeElement(CXE.newMessagePage.audioPlaybackTime);
+    I.seeElement(CXE.newMessagePage.audioProgressBar);
+
+    I.seeElement(CXE.newMessagePage.futureDeliveryDateControl);
+    I.seeElement(CXE.newMessagePage.futureDeliveryLabel);
+    I.seeElement(CXE.newMessagePage.futureDeliveryTimeControl);
+    I.seeElement(CXE.newMessagePage.futureDeliveryToggle);
+
+    I.seeElement(CXE.newMessagePage.urgentLabel);
+    I.seeElement(CXE.newMessagePage.urgentToggle);
+
+    I.seeElement(CXE.newMessagePage.privateLabel);
+    I.seeElement(CXE.newMessagePage.privateToggle);
+
+    I.seeElement(CXE.newMessagePage.readReceiptLabel);
+    I.seeElement(CXE.newMessagePage.readReceiptToggle);
+}).tag('@BVT');
+
+
+/**
+ * Send and receive a message in the system
+ */
+Scenario(TestName.generate(featureName, 'Test Messaging Send / Receipt'), async ({ CXE, I }) => {
+    const mailboxNumber = TestContext.getInstance().username;
+
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage(); 
+
+    const messageSubject = new Date().toISOString();
+    CXE.newMessagePage.sendMessageAttachFile(mailboxNumber, messageSubject, './tests/ui/artifacts/TestOutput.mp3');
+
+    await CXE.inboxPage.verifyMessageExists(messageSubject);
+    CXE.inboxPage.selectMessageBySubject(messageSubject);
+    CXE.inboxPage.verifyMessage(messageSubject, TestContext.getInstance().accountName, mailboxNumber);
+
+    // Set Downloads and download the file
+    I.handleDownloads();
+    I.click(CXE.inboxPage.downloadButton);
+
+    // Wait to get the file name from the page
+    const timeoutEnd = new timeouts().getTimeoutEndProvideLength(15);
+    let fileName = null;
+    do {
+        fileName = await I.grabAttributeFrom(CXE.inboxPage.downloadAnchor, 'download');
+        I.wait(3);
+    }while (fileName === null && new Date() < timeoutEnd);
+
+    const downloadLocation = 'output/downloads';
+
+    // Verify file exists
+    I.amInPath(downloadLocation);
+    I.seeFile(fileName);
+
+    // Verify file contents are correct
+    const downloadHash = md5File.sync(downloadLocation + '/' + fileName);
+    const originalHash = md5File.sync('tests/ui/artifacts/TestOutputValidation.mp3');
+    I.assert(downloadHash, originalHash);
+    
+    CXE.inboxPage.deleteMessage(messageSubject);
+});
+
+/**
+ * Select the Cancel button to transition away from the new message page
+ */
+Scenario(TestName.generate(featureName, 'Cancel Transition'), ({ CXE, I }) => {
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    I.click(CXE.newMessagePage.cancelButton);
+    CXE.inboxPage.verifyPage();
+}).tag('@BVT');
+
+Scenario(TestName.generate(featureName, 'Validate To Field'), async ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+    const placeholderText = await I.grabAttributeFrom(CXE.newMessagePage.toTextField, 'placeholder');
+    I.assert(placeholderText, 'Enter name', 'Placeholder text for to field was incorrect.');
+});
+
+Scenario(TestName.generate(featureName, 'To Field Verify Helper Text Changes on Text Entry / Clear'), async ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    // Deselect the field
+    I.click(CXE.newMessagePage.subjectTextField);
+
+    const toTextfieldFileName = 'To Textfield Default';
+    await I.visuallyValidateObject(CXE.newMessagePage.toTextField, toTextfieldFileName, CXE.newMessagePage.pageName);
+
+    // Fill in the text field
+    const toTextfieldFilledFileName = 'To Textfield Filled';
+    I.fillField(CXE.newMessagePage.toTextField, 'a');
+    await I.visuallyValidateObject(CXE.newMessagePage.toTextField, toTextfieldFilledFileName, CXE.newMessagePage.pageName);
+
+    // Clear the text field
+    I.clearField(CXE.newMessagePage.toTextField);
+    
+    // Deselect the field
+    I.click(CXE.newMessagePage.subjectTextField);
+
+    // Validate default text is set again
+    await I.visuallyValidateObject(CXE.newMessagePage.toTextField, toTextfieldFileName, CXE.newMessagePage.pageName);
+});
+
+Scenario(TestName.generate(featureName, 'To Field String Testing'), ({ I, CXE }) => {
+    const stringToTest = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ1234567890`-=[];',./!~@#$%^&*()_+{}|:\"<>?ȜȞŰ©±是🥰平仮名";
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    I.fillField(CXE.newMessagePage.toTextField, stringToTest);
+    I.seeInField(CXE.newMessagePage.toTextField, stringToTest);
+});
+
+Scenario(TestName.generate(featureName, 'To Text Field Search Validation'), async ({ CXE }) => {
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    await CXE.newMessagePage.verifyToList('mail');
+});
+
+Scenario(TestName.generate(featureName, 'Subject Field String Testing'), ({ I, CXE }) => {
+    const stringToTest = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ1234567890`-=[];',./!~@#$%^&*()_+{}|:\"<>?ȜȞŰ©±是🥰平仮名";
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    I.fillField(CXE.newMessagePage.subjectTextField, stringToTest);
+    I.seeInField(CXE.newMessagePage.subjectTextField, stringToTest);
+});
+
+Scenario(TestName.generate(featureName, 'Subject Field Verify Helper Text Changes on Text Entry / Clear'), async ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    // Deselect the field
+    I.click(CXE.newMessagePage.toTextField);
+
+    const subjectTextfieldFileName = 'Subject Textfield Default';
+    await I.visuallyValidateObject(CXE.newMessagePage.subjectTextField, subjectTextfieldFileName, CXE.newMessagePage.pageName);
+
+    // Fill in the text field
+    const subjectTextfieldFilledFileName = 'Subject Textfield Filled';
+    I.fillField(CXE.newMessagePage.subjectTextField, 'a');
+    await I.visuallyValidateObject(CXE.newMessagePage.subjectTextField, subjectTextfieldFilledFileName, CXE.newMessagePage.pageName);
+
+    // Clear the text field
+    I.clearField(CXE.newMessagePage.subjectTextField);
+    
+    // Deselect the field
+    I.click(CXE.newMessagePage.toTextField);
+
+    // Validate default text is set again
+    await I.visuallyValidateObject(CXE.newMessagePage.subjectTextField, subjectTextfieldFileName, CXE.newMessagePage.pageName);
+});
+
+Scenario(TestName.generate(featureName, 'Verify a read receipt is received after the message was read'), async ({ I, CXE }) => {
+    const mailboxNumber = TestContext.getInstance().username;
+    const messageLength = 5;
+    const messageSubject = 'Message with Read Receipt';
+
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    // Fill required fields and send a message with Read Receipt toggle ON
+    I.fillField(CXE.newMessagePage.toTextField, mailboxNumber);
+    I.click(CXE.newMessagePage.toListItem(mailboxNumber));
+
+    I.fillField(CXE.newMessagePage.subjectTextField, messageSubject);
+
+    I.click(CXE.newMessagePage.recordButton);
+    I.wait(messageLength);
+    I.click(CXE.newMessagePage.stopButton);
+
+    I.click(CXE.newMessagePage.readReceiptToggle);
+
+    I.click(CXE.newMessagePage.sendButton);
+
+    await CXE.inboxPage.verifyMessageExists(messageSubject);
+
+    // Mark the message as read
+    CXE.inboxPage.selectMessageBySubject(messageSubject);
+
+    I.click(CXE.inboxPage.markAsReadButton);
+
+    // Verify Read Receipt arrives and verify the notification icon for it
+    await CXE.inboxPage.verifyMessageExists(messageSubject);
+
+    I.seeElement(CXE.newMessagePage.readReceiptNotificationIcon);
+});
+
+Scenario(TestName.generate(featureName, 'Verify the recorded message can be replaced by selecting an audio file from the system.'), async ({ I, CXE }) => {
+    const messageLength = 5;
+
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    // Clicking Record button fails if test doesn't perform any prior action, hence filling the subject field.
+    I.fillField(CXE.newMessagePage.subjectTextField, 'Test Message');
+
+    // Record a message
+    I.click(CXE.newMessagePage.recordButton);
+    I.wait(messageLength);
+    I.click(CXE.newMessagePage.stopButton);
+
+    // Verify the recorded message can be replaced by audio file
+    I.attachFile(CXE.newMessagePage.audioInput, './tests/ui/artifacts/TestOutput.mp3');
+    I.seeElement(CXE.newMessagePage.uploadSuccessMessage);
+
+
+});
+
+Scenario(TestName.generate(featureName, 'Verify the Cancel button will discard the message.'), async ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    I.fillField(CXE.newMessagePage.subjectTextField, 'Test Message');
+
+    I.seeElement(CXE.newMessagePage.cancelButton);
+
+    I.click(CXE.newMessagePage.cancelButton);
+
+    // Verify the message is discarded and you are in Inbox, verifying Refresh button
+    I.seeElement(CXE.inboxPage.refreshButton);
+});
+
+
+Scenario(TestName.generate(featureName, 'Verify the recorded message is sent successfully.'), async ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    const mailboxNumber = TestContext.getInstance().username;
+    const messageLength = 5;
+    const messageSubject = new Date().toISOString();
+    CXE.newMessagePage.sendMessageRecordAudio(mailboxNumber, messageSubject, messageLength);
+
+    // Verify the recorded button exist
+    await CXE.inboxPage.verifyMessageExists(messageSubject);
+    CXE.inboxPage.verifyMessage(messageSubject, TestContext.getInstance().accountName, mailboxNumber);
+});
+
+
+Scenario(TestName.generate(featureName, 'Verify upload icon and the hover text for it.'), async ({ I, CXE }) => {
+    CXE.loginPage.signIn();
+    CXE.goto.newMessage();
+
+    I.seeElement(CXE.newMessagePage.uploadButton);
+
+    // Verify hover text
+    I.visuallyValidateObject(CXE.newMessagePage.uploadButton, 'Upload a Pre-recorded Message', CXE.newMessagePage.pageName);
+    const uploadToolTip = await I.grabAttributeFrom(CXE.newMessagePage.uploadButton, 'Title');
+    I.assert(uploadToolTip, 'Upload a Pre-recorded Message', 'Expected upload tooltip to match string of Upload a Pre-recorded Message');
+
+});

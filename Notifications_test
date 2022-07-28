@@ -1,0 +1,117 @@
+import path = require('path');
+import click from 'webdriverio/build/commands/element/click';
+const featureName: string = path.parse(__filename).name;
+const tryTo = codeceptjs.container.plugins('tryTo');
+
+import { TestContext } from '../../../library/testcontext/testcontext';
+import { TestName } from '../../../library/testname';
+
+Feature('Web Client');
+
+/**
+ * Validates Save | Cancel buttons enable and disable functionality
+ */
+
+ Scenario(TestName.generate(featureName, 'Save | Cancel buttons enabled and disabled'), async ({ I, CXE }) => {
+
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn(TestContext.getInstance().username, TestContext.getInstance().password);
+    
+    CXE.goto.notificationsPage();
+    
+    // Ensure save and cancel button are disabled
+    I.seeElement(CXE.notificationsPage.saveButtonDisabled);
+    I.seeElement(CXE.notificationsPage.cancelButtonDisabled);
+    
+    // Change the state of a field
+    I.checkOption(CXE.notificationsPage.enableDailyON);
+
+    // Ensure save and cancel button are enabled
+    I.seeElement(CXE.notificationsPage.saveButtonEnabled);
+    I.seeElement(CXE.notificationsPage.cancelButtonEnabled);
+
+});
+
+/**
+ * Validates Include Voice messages check uncheck functionality
+ */
+
+ Scenario(TestName.generate(featureName, 'Include Voice messages check uncheck'), async ({ I, CXE }) => {
+
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn(TestContext.getInstance().username, TestContext.getInstance().password);
+    
+    CXE.goto.notificationsPage();
+    //testing unchecking the Include Voice messages checkbox control and saving the change
+    // Ensure Include Voice messages checkbox control is present
+    I.seeElement(CXE.notificationsPage.includeVoiceMsgION);
+
+    // Mailbox defaukt has this option checked click checkbox to uncheck
+    I.uncheckOption(CXE.notificationsPage.includeVoiceMsgION);
+    //validate Save button is enabled
+    I.seeElement(CXE.notificationsPage.saveButtonEnabled);
+    // Use Save button to commit change
+    I.click(CXE.notificationsPage.saveButton);
+    //Validate state of checkbox is unchecked
+    I.dontSeeCheckboxIsChecked(CXE.notificationsPage.includeVoiceMsgION);
+
+        
+    //testing checking the Include Voice messages checkbox control and saving the change
+    // Click checkbox to check
+    I.checkOption(CXE.notificationsPage.includeVoiceMsgION);
+    //validate Save button is enabled
+    I.seeElement(CXE.notificationsPage.saveButtonEnabled);
+    // Use Save button to commit change
+    I.click(CXE.notificationsPage.saveButton);
+    //Validate state of checkbox is checked
+    I.seeCheckboxIsChecked(CXE.notificationsPage.includeVoiceMsgION);
+
+});
+
+Scenario(TestName.generate(featureName, 'Validate default value for Notify Status is All and change to Urgent and validate it is saved'), async ({ I, CXE }) => {
+
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn(TestContext.getInstance().username, TestContext.getInstance().password);
+    
+    CXE.goto.notificationsPage();
+    //Ensure  Notify Status controls are present
+    I.seeElement(CXE.notificationsPage.notifyStatusAllION);
+    I.seeElement(CXE.notificationsPage.notifyStatusUrgentION);
+
+    // Validate Notify Status default state is All
+    I.seeCheckboxIsChecked(CXE.notificationsPage.notifyStatusAllION);
+
+    // Select option Urgent for Notify Status and validate change is saved
+    I.checkOption(CXE.notificationsPage.notifyStatusUrgentION);
+    //validate Save button is enabled
+    I.seeElement(CXE.notificationsPage.saveButtonEnabled);
+    // Use Save button to commit change
+    I.click(CXE.notificationsPage.saveButton);
+    //Validate state of checkbox is unchecked
+    I.seeCheckboxIsChecked(CXE.notificationsPage.notifyStatusUrgentION);
+
+    // Select option All for Notify Status and validate change is saved
+    I.checkOption(CXE.notificationsPage.notifyStatusAllION);
+    //validate Save button is enabled
+    I.seeElement(CXE.notificationsPage.saveButtonEnabled);
+    // Use Save button to commit change
+    I.click(CXE.notificationsPage.saveButton);
+    //Validate state of checkbox is unchecked
+    I.seeCheckboxIsChecked(CXE.notificationsPage.notifyStatusAllION);      
+    
+
+});
+
+Scenario(TestName.generate(featureName, 'Verify a helper text is displayed below the field that reads'), async ({ I, CXE }) => {
+
+    CXE.goto.loginPage();
+    CXE.loginPage.signIn(TestContext.getInstance().username, TestContext.getInstance().password);
+    
+    CXE.goto.notificationsPage();
+    //Ensure  Helper text is present
+    I.seeElement(CXE.notificationsPage.notifyFromUserHelperTextION);     
+
+    I.seeTextEquals('Only supported when you\'re using this app for voicemail', CXE.notificationsPage.notifyFromUserHelperTextION);
+    
+
+});

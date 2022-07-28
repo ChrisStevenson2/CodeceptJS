@@ -1,0 +1,34 @@
+import path = require('path');
+import { TestName } from '../../../library/testname';
+
+const featureName: string = path.parse(__filename).name;
+
+Feature('Web Client');
+
+/**
+ * Tests visual rendering and branding of the logon page
+ */
+Scenario(TestName.generate(featureName, 'Login Page: Test branding and version number'), async ({ I, CXE }) => {
+    CXE.goto.loginPage();
+    I.visuallyValidateObject(CXE.loginPage.logoTop, 'Top Logo', CXE.loginPage.pageName);
+    I.visuallyValidateObject(CXE.loginPage.logoBottom, 'Bottom Logo', CXE.loginPage.pageName);
+    I.assert('Copyright © 2020 XMedius. All Rights Reserved.\nTrademarks owned by XMedius and Open Text.', await I.grabTextFrom(CXE.loginPage.copyrightText));
+
+    // Get version text and check if the start of the version number is correct.
+    const version = String(await I.grabTextFrom(CXE.loginPage.versionText));
+
+    // Split on unicode whitespace. This is necessary as a standard whitespace will not work to split on.
+    const versionArray = version.split('\u00A0');
+
+    I.assert('Version', versionArray[0], 'Expected first portion of Version should be Version. Actual was ' + versionArray[0]);
+
+    // Extract and process the version number
+    const year = '21';
+    const quarter = '2';
+    const minorNumber = '0';
+
+    const versionNumberArray = versionArray[1].split('.');
+    I.assert(year, versionNumberArray[0], 'Year was expected to be ' + year + '. Actual was ' + year);
+    I.assert(quarter, versionNumberArray[1], 'Quarter was expected to be ' + quarter + '. Actual was ' + quarter);
+    I.assert(minorNumber, versionNumberArray[2], 'Minor version was expected to be ' + minorNumber + '. Actual was ' + minorNumber);
+});

@@ -1,0 +1,9 @@
+Mitel MWI test - 
+
+
+For the extension that is the target of the MWI.  Please not the relative time of these tests.
+-	Have it in a call while you try to send an MWI to it.   I need to make sure we don’t’ get a busy and reject the MWI.
+-	Unplug the station and try the MWI – should still work on the PBX as the device is configure but would be interesting to know what happens.
+-	If there is some type of signout or out of service state you can put the phone into  - try that and do the MWI.
+
+
